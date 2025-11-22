@@ -1,0 +1,93 @@
+import java.util.*;
+
+public class GraphMalang {
+    private Map<String, List<Edge>> graph = new HashMap<>();
+
+    public void tambahLokasi(String node) {
+        graph.putIfAbsent(node, new ArrayList<>());
+    }
+
+    public void tambahJalur(String A, String B, int jarak, int waktu) {
+        tambahLokasi(A);
+        tambahLokasi(B);
+
+        graph.get(A).add(new Edge(B, jarak, waktu));
+        graph.get(B).add(new Edge(A, jarak, waktu));
+    }
+
+    public boolean bisapergiBFS(String A, String B) {
+        if (!graph.containsKey(A) || !graph.containsKey(B)) return false;
+
+        Queue<String> q = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+
+        q.add(A);
+        visited.add(A);
+
+        while (!q.isEmpty()) {
+            String now = q.poll();
+            if (now.equals(B)) return true;
+
+            for (Edge e : graph.get(now)) {
+                if (!visited.contains(e.tujuan)) {
+                    visited.add(e.tujuan);
+                    q.add(e.tujuan);
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean bisapergiDFS(String A, String B) {
+        return dfs(A, B, new HashSet<>());
+    }
+
+    private boolean dfs(String now, String tujuan, Set<String> visited) {
+        if (now.equals(tujuan)) return true;
+        visited.add(now);
+
+        for (Edge e : graph.get(now)) {
+            if (!visited.contains(e.tujuan)) {
+                if (dfs(e.tujuan, tujuan, visited)) return true;
+            }
+        }
+        return false;
+    }
+
+    class Edge {
+    String tujuan;
+    int jarak;
+    int waktu;
+
+    Edge(String tujuan, int jarak, int waktu) {
+        this.tujuan = tujuan;
+        this.jarak = jarak;
+        this.waktu = waktu;
+    }
+}
+
+    public static void main(String[] args) {
+        GraphMalang g = new GraphMalang();
+
+        g.tambahJalur("Stasiun Kota Baru", "Museum Brawijaya", 4, 10);
+        g.tambahJalur("Museum Brawijaya", "Matos", 3, 8);
+        g.tambahJalur("Matos", "Universitas Brawijaya", 3, 12);
+       
+        // jalur alternatif
+        g.tambahJalur("Stasiun Kota Baru", "Pasar Besar", 7, 15);
+        g.tambahJalur("Pasar Besar", "Universitas Brawijaya", 12, 25);
+
+        Scanner in = new Scanner(System.in);
+        System.out.print("Masukkan titik asal : ");
+        String A = in.nextLine();
+        System.out.print("Masukkan titik tujuan : ");
+        String B = in.nextLine();
+        System.out.println("---Hasil----");
+        boolean hasil = g.bisapergiBFS(A, B);
+
+        if (hasil)
+            System.out.println("Dari " + A + " menuju " + B + ": (BFS) Dapat dijangkau");
+        else
+            System.out.println("Jalur tidak dapat dijangkau");
+    }
+}
