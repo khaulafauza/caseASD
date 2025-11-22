@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class GraphMalang2 {
+public class GraphMalang {
     private Map<String, List<Edge>> graph = new HashMap<>();
 
     public void tambahLokasi(String node) {
