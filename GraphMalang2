@@ -1,0 +1,198 @@
+import java.util.*;
+
+public class GraphMalang2 {
+    private Map<String, List<Edge>> graph = new HashMap<>();
+
+    public void tambahLokasi(String node) {
+        graph.putIfAbsent(node, new ArrayList<>());
+    }
+
+    public void tambahJalur(String A, String B, int jarak, int waktu) {
+        tambahLokasi(A);
+        tambahLokasi(B);
+        graph.get(A).add(new Edge(B, jarak, waktu));
+        graph.get(B).add(new Edge(A, jarak, waktu));
+    }
+
+    public boolean bisapergiBFS(String A, String B) {
+        if (!graph.containsKey(A) || !graph.containsKey(B)) return false;
+
+        Queue<String> q = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+
+        q.add(A);
+        visited.add(A);
+
+        while (!q.isEmpty()) {
+            String now = q.poll();
+            if (now.equals(B)) return true;
+
+            for (Edge e : graph.get(now)) {
+                if (!visited.contains(e.tujuan)) {
+                    visited.add(e.tujuan);
+                    q.add(e.tujuan);
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean bisapergiDFS(String A, String B) {
+        return dfs(A, B, new HashSet<>());
+    }
+
+    private boolean dfs(String now, String tujuan, Set<String> visited) {
+        if (now.equals(tujuan)) return true;
+        visited.add(now);
+
+        for (Edge e : graph.get(now)) {
+            if (!visited.contains(e.tujuan)) {
+                if (dfs(e.tujuan, tujuan, visited)) return true;
+            }
+        }
+        return false;
+    }
+
+    class Edge {
+    String tujuan;
+    int jarak;
+    int waktu;
+
+
+    Edge(String tujuan, int jarak, int waktu) {
+        this.tujuan = tujuan;
+        this.jarak = jarak;
+        this.waktu = waktu;
+    }
+}
+
+class Result {
+    List<String> path;
+    int totalJarak;
+    int totalWaktu;
+
+    Result(List<String> path, int j, int w) {
+        this.path = path;
+        this.totalJarak = j;
+        this.totalWaktu = w;
+    }
+}
+
+public Result pergiBFS(String A, String B) {
+    if(!graph.containsKey(A) || !graph.containsKey(B)) return null;
+
+    Queue<String> q = new LinkedList<>();
+    Map<String, String> parent = new HashMap<>();
+    Map<String, Integer> dist = new HashMap<>();
+    Map<String, Integer> time = new HashMap<>();
+    Set<String> visited = new HashSet<>();
+
+    q.add(A); visited.add(A);
+    dist.put(A, 0);
+    time.put(A, 0);
+
+    while(!q.isEmpty()) {
+        String now = q.poll();
+        if(now.equals(B)) break;
+
+        for(Edge e : graph.get(now)) {
+            if(!visited.contains(e.tujuan)) {
+                visited.add(e.tujuan);
+                parent.put(e.tujuan, now);
+                dist.put(e.tujuan, dist.get(now) + e.jarak);
+                time.put(e.tujuan, time.get(now) + e.waktu);
+                q.add(e.tujuan);
+            }
+        }
+    }
+
+    if(!parent.containsKey(B)) return null;
+
+    List<String> path = new ArrayList<>();
+    String curr = B;
+    while(curr != null) {
+        path.add(curr);
+        curr = parent.get(curr);
+    }
+    Collections.reverse(path);
+
+    return new Result(path, dist.get(B), time.get(B));
+}
+
+public Result pergiDFS(String A, String B) {
+    List<String> path = new ArrayList<>();
+    Set<String> visited = new HashSet<>();
+    boolean found = dfsPath(A, B, visited, path);
+   
+    if(!found) return null;
+
+    int totalJarak = 0;
+    int totalWaktu = 0;
+
+    for(int i = 0; i < path.size() - 1; i++) {
+        String x = path.get(i);
+        String y = path.get(i+1);
+
+        for(Edge e : graph.get(x)) {
+            if(e.tujuan.equals(y)) {
+                totalJarak += e.jarak;
+                totalWaktu += e.waktu;
+                break;
+            }
+        }
+    }
+
+    return new Result(path, totalJarak, totalWaktu);
+}
+
+private boolean dfsPath(String now, String target, Set<String> visited, List<String> path) {
+    visited.add(now);
+    path.add(now);
+    if(now.equals(target)) return true;
+
+    for(Edge e : graph.get(now)) {
+        if(!visited.contains(e.tujuan)) {
+            if(dfsPath(e.tujuan, target, visited, path)) return true;
+        }
+    }
+
+    path.remove(path.size() - 1);
+    return false;
+}
+
+    public static void main(String[] args) {
+        GraphMalang g = new GraphMalang();
+
+        g.tambahJalur("Stasiun Kota Baru", "Museum Brawijaya", 4, 10);
+        g.tambahJalur("Museum Brawijaya", "Matos", 3, 8);
+        g.tambahJalur("Matos", "Universitas Brawijaya", 3, 12);
+       
+        g.tambahJalur("Stasiun Kota Baru", "Pasar Besar", 7, 15);
+        g.tambahJalur("Pasar Besar", "Universitas Brawijaya", 12, 25);
+
+        Scanner in= new Scanner(System.in);
+
+        System.out.print("Masukkan titik asal: ");
+        String A = in.nextLine();
+        System.out.print("Masukkan titik tujuan: ");
+        String B = in.nextLine();
+        System.out.println("---Hasil---");
+
+        if (!g.bisapergiBFS(A, B)) {
+            System.out.println("Jalur tidak dapat dijangkau");
+            return;
+        }
+
+        // BFS 
+        Result bfs = g.pergiBFS(A, B);
+        System.out.println("Menggunakan BFS, total jarak: " + bfs.totalJarak +
+                " km, total waktu: " + bfs.totalWaktu + " menit");
+        System.out.println("Jalur " + String.join(", ", bfs.path));
+
+        // DFS 
+        Result dfs = g.pergiDFS(A, B);
+        System.out.println("\nMenggunakan DFS, total jarak: " + dfs.totalJarak +
+                " km, total waktu: " + dfs.totalWaktu + " menit");
+        System.out.println("Jalur " + String.join(", ", dfs.path));
+    }
+}
